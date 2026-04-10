@@ -271,13 +271,13 @@ export default function Home() {
                       <div className="space-y-3">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Target Domain</label>
                         <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none" value={careerData["Interested Domain"]} onChange={(e) => updateCareer("Interested Domain", e.target.value)}>
-                          <option>Data &amp; AI</option>
-                          <option>Software Engineer</option>
-                          <option>Software Development</option>
-                          <option>Security &amp; Infrastructure</option>
-                          <option>Database &amp; Systems</option>
-                          <option>Graphics Programmer</option>
-                          <option>Specialized Roles</option>
+                          <option value="Data & AI">Data &amp; AI</option>
+                          <option value="Software Engineer">Software Engineer</option>
+                          <option value="Software Development">Software Development</option>
+                          <option value="Security & Infrastructure">Security &amp; Infrastructure</option>
+                          <option value="Database & Systems">Database &amp; Systems</option>
+                          <option value="Graphics Programmer">Graphics Programmer</option>
+                          <option value="Specialized Roles">Specialized Roles</option>
                         </select>
                       </div>
                       <div className="space-y-3">

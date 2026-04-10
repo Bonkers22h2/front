@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import {
   BookOpen,
   Briefcase,
@@ -13,6 +14,7 @@ import {
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [studentNumber, setStudentNumber] = useState("");
 
   // --- FULL 36-FEATURE RISK STATE (SVM) ---
   const [riskData, setRiskData] = useState({
@@ -88,9 +90,11 @@ export default function Home() {
       const response = await fetch("http://localhost:8000/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ risk_features: normalizedRiskData, career_features: normalizedCareerData }),
+        body: JSON.stringify({ studentNumber: studentNumber.trim(), risk_features: normalizedRiskData, career_features: normalizedCareerData }),
       });
+
       const data = await response.json();
+      console.log(data);
       setResult(data);
     } catch (error) {
       setResult({ error: "Backend Connection Failed. Run uvicorn api:app." });
@@ -114,6 +118,14 @@ export default function Home() {
               <p className="text-slate-500 font-bold text-sm">Hybrid Expert System • T.I.P. CS 404</p>
             </div>
           </div>
+
+          <Link
+            href="/search"
+            className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-3 font-black text-slate-800 hover:bg-slate-50"
+          >
+            Search
+            <ChevronRight size={18} />
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -123,6 +135,21 @@ export default function Home() {
             <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-200">
               <form onSubmit={handlePredict} className="space-y-8">
                 <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Student Number</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., 2024-000123"
+                        value={studentNumber}
+                        onChange={(e) => setStudentNumber(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
                   <div>
                     <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500 mb-4">Academic Risk Assessment</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

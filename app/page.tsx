@@ -39,13 +39,13 @@ export default function Home() {
     "Curricular units 1st sem (enrolled)": 6,
     "Curricular units 1st sem (evaluations)": 6,
     "Curricular units 1st sem (approved)": 5,
-    "Curricular units 1st sem (grade)": 12,
+    "Curricular units 1st sem (grade)": 1.75,
     "Curricular units 1st sem (without evaluations)": 0,
     "Curricular units 2nd sem (credited)": 0,
     "Curricular units 2nd sem (enrolled)": 6,
     "Curricular units 2nd sem (evaluations)": 6,
     "Curricular units 2nd sem (approved)": 5,
-    "Curricular units 2nd sem (grade)": 12,
+    "Curricular units 2nd sem (grade)": 1.75,
     "Curricular units 2nd sem (without evaluations)": 0,
     "Unemployment rate": 10.8,
     "Inflation rate": 1.4,
@@ -56,9 +56,9 @@ export default function Home() {
   const [careerData, setCareerData] = useState({
     "Gender": "Male",
     "Age": 20,
-    "GPA": 3.0,
+    "GPA": 1.75,
     "Major": "Computer Science",
-    "Interested Domain": "Software Development",
+    "Interested Domain": "Software Engineer",
     "Projects": "Academic Project",
     "Python": "Average",
     "SQL": "Average",
@@ -72,16 +72,23 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     try {
+      const normalizedRiskData = {
+        ...riskData,
+        "Curricular units 1st sem (grade)": parseFloat(String(riskData["Curricular units 1st sem (grade)"])),
+        "Curricular units 2nd sem (grade)": parseFloat(String(riskData["Curricular units 2nd sem (grade)"])),
+      };
+
       const normalizedCareerData = {
         ...careerData,
         Gender: riskData["Gender"] === 1 ? "Male" : "Female",
         Age: riskData["Age at enrollment"],
+        GPA: parseFloat(String(careerData["GPA"])),
       };
 
       const response = await fetch("http://localhost:8000/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ risk_features: riskData, career_features: normalizedCareerData }),
+        body: JSON.stringify({ risk_features: normalizedRiskData, career_features: normalizedCareerData }),
       });
       const data = await response.json();
       setResult(data);
@@ -155,8 +162,18 @@ export default function Home() {
                         <input type="number" className="w-full border rounded-lg p-2" value={riskData["Curricular units 1st sem (approved)"]} onChange={(e) => updateRisk("Curricular units 1st sem (approved)", Number(e.target.value))} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Average Grade</label>
-                        <input type="number" step="0.1" className="w-full border rounded-lg p-2" value={riskData["Curricular units 1st sem (grade)"]} onChange={(e) => updateRisk("Curricular units 1st sem (grade)", Number(e.target.value))} />
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Semester GWA</label>
+                        <input
+                          type="number"
+                          min="1.00"
+                          max="5.00"
+                          step="0.01"
+                          placeholder="e.g., 1.75"
+                          className="w-full border rounded-lg p-2"
+                          value={riskData["Curricular units 1st sem (grade)"]}
+                          onChange={(e) => updateRisk("Curricular units 1st sem (grade)", Number(e.target.value))}
+                        />
+                        <span className="text-xs text-gray-400">Enter value between 1.00 (Excellent) and 5.00 (Failed)</span>
                       </div>
                     </div>
                   </div>
@@ -173,8 +190,18 @@ export default function Home() {
                         <input type="number" className="w-full border rounded-lg p-2" value={riskData["Curricular units 2nd sem (approved)"]} onChange={(e) => updateRisk("Curricular units 2nd sem (approved)", Number(e.target.value))} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase">Average Grade</label>
-                        <input type="number" step="0.1" className="w-full border rounded-lg p-2" value={riskData["Curricular units 2nd sem (grade)"]} onChange={(e) => updateRisk("Curricular units 2nd sem (grade)", Number(e.target.value))} />
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Semester GWA</label>
+                        <input
+                          type="number"
+                          min="1.00"
+                          max="5.00"
+                          step="0.01"
+                          placeholder="e.g., 1.75"
+                          className="w-full border rounded-lg p-2"
+                          value={riskData["Curricular units 2nd sem (grade)"]}
+                          onChange={(e) => updateRisk("Curricular units 2nd sem (grade)", Number(e.target.value))}
+                        />
+                        <span className="text-xs text-gray-400">Enter value between 1.00 (Excellent) and 5.00 (Failed)</span>
                       </div>
                     </div>
                   </div>
@@ -244,15 +271,28 @@ export default function Home() {
                       <div className="space-y-3">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Target Domain</label>
                         <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none" value={careerData["Interested Domain"]} onChange={(e) => updateCareer("Interested Domain", e.target.value)}>
+                          <option>Data &amp; AI</option>
+                          <option>Software Engineer</option>
                           <option>Software Development</option>
-                          <option>Artificial Intelligence</option>
-                          <option>Cybersecurity</option>
-                          <option>Data Science</option>
+                          <option>Security &amp; Infrastructure</option>
+                          <option>Database &amp; Systems</option>
+                          <option>Graphics Programmer</option>
+                          <option>Specialized Roles</option>
                         </select>
                       </div>
                       <div className="space-y-3">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Technical GPA</label>
-                        <input type="number" step="0.1" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3" value={careerData["GPA"]} onChange={(e) => updateCareer("GPA", Number(e.target.value))} />
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Core CS GWA</label>
+                        <input
+                          type="number"
+                          min="1.00"
+                          max="5.00"
+                          step="0.01"
+                          placeholder="e.g., 1.75"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3"
+                          value={careerData["GPA"]}
+                          onChange={(e) => updateCareer("GPA", Number(e.target.value))}
+                        />
+                        <span className="text-xs text-gray-400">Enter value between 1.00 (Excellent) and 5.00 (Failed)</span>
                       </div>
                     </div>
                   </div>

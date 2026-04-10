@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import {
-  User,
   BookOpen,
   Briefcase,
   Settings,
@@ -14,7 +13,6 @@ import {
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState("academic");
 
   // --- FULL 36-FEATURE RISK STATE (SVM) ---
   const [riskData, setRiskData] = useState({
@@ -74,10 +72,16 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     try {
+      const normalizedCareerData = {
+        ...careerData,
+        Gender: riskData["Gender"] === 1 ? "Male" : "Female",
+        Age: riskData["Age at enrollment"],
+      };
+
       const response = await fetch("http://localhost:8000/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ risk_features: riskData, career_features: careerData }),
+        body: JSON.stringify({ risk_features: riskData, career_features: normalizedCareerData }),
       });
       const data = await response.json();
       setResult(data);
@@ -103,11 +107,6 @@ export default function Home() {
               <p className="text-slate-500 font-bold text-sm">Hybrid Expert System • T.I.P. CS 404</p>
             </div>
           </div>
-
-          <nav className="flex bg-white p-1 rounded-2xl shadow-sm border border-slate-200">
-            <button onClick={() => setActiveTab("academic")} className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${activeTab === "academic" ? "bg-slate-900 text-white" : "text-slate-400"}`}>ACADEMIC RISK</button>
-            <button onClick={() => setActiveTab("career")} className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${activeTab === "career" ? "bg-slate-900 text-white" : "text-slate-400"}`}>CAREER PATHWAY</button>
-          </nav>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -116,20 +115,22 @@ export default function Home() {
           <div className="lg:col-span-7">
             <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-200">
               <form onSubmit={handlePredict} className="space-y-8">
-
-                {activeTab === "academic" ? (
-                  <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-500">
-                    {/* Academic Performance */}
+                <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-500">
+                  <div>
+                    <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500 mb-4">Academic Risk Assessment</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Tuition Status</label>
-                        <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500" value={riskData["Tuition fees up to date"]} onChange={(e) => {
-                          const val = Number(e.target.value);
-                          updateRisk("Tuition fees up to date", val);
-                          updateRisk("Debtor", val === 0 ? 1 : 0);
-                        }}>
+                        <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500" value={riskData["Tuition fees up to date"]} onChange={(e) => updateRisk("Tuition fees up to date", Number(e.target.value))}>
                           <option value={1}>Paid & Up to Date</option>
                           <option value={0}>Unpaid / Overdue</option>
+                        </select>
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Debtor</label>
+                        <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500" value={riskData["Debtor"]} onChange={(e) => updateRisk("Debtor", Number(e.target.value))}>
+                          <option value={0}>No</option>
+                          <option value={1}>Yes</option>
                         </select>
                       </div>
                       <div className="space-y-3">
@@ -140,39 +141,105 @@ export default function Home() {
                         </select>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-6">
-                      <h3 className="text-sm font-black text-slate-800 flex items-center gap-2"><LineChart size={16} /> FIRST SEMESTER METRICS</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase">Units Approved</label>
-                          <input type="number" className="w-full border rounded-lg p-2" value={riskData["Curricular units 1st sem (approved)"]} onChange={(e) => updateRisk("Curricular units 1st sem (approved)", Number(e.target.value))} />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase">Average Grade</label>
-                          <input type="number" step="0.1" className="w-full border rounded-lg p-2" value={riskData["Curricular units 1st sem (grade)"]} onChange={(e) => updateRisk("Curricular units 1st sem (grade)", Number(e.target.value))} />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase">Age at Enrollment</label>
-                          <input type="number" className="w-full border rounded-lg p-2" value={riskData["Age at enrollment"]} onChange={(e) => updateRisk("Age at enrollment", Number(e.target.value))} />
-                        </div>
+                  <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-6">
+                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2"><LineChart size={16} /> FIRST SEMESTER METRICS</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Units Enrolled</label>
+                        <input type="number" className="w-full border rounded-lg p-2" value={riskData["Curricular units 1st sem (enrolled)"]} onChange={(e) => updateRisk("Curricular units 1st sem (enrolled)", Number(e.target.value))} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Units Approved</label>
+                        <input type="number" className="w-full border rounded-lg p-2" value={riskData["Curricular units 1st sem (approved)"]} onChange={(e) => updateRisk("Curricular units 1st sem (approved)", Number(e.target.value))} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Average Grade</label>
+                        <input type="number" step="0.1" className="w-full border rounded-lg p-2" value={riskData["Curricular units 1st sem (grade)"]} onChange={(e) => updateRisk("Curricular units 1st sem (grade)", Number(e.target.value))} />
                       </div>
                     </div>
+                  </div>
 
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-black text-slate-800 flex items-center gap-2"><Settings size={16} /> SOCIO-ECONOMIC FACTORS</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <select className="border rounded-lg p-2 text-xs" value={riskData["Displaced"]} onChange={(e) => updateRisk("Displaced", Number(e.target.value))}>
-                          <option value={1}>Displaced Student</option><option value={0}>Non-Displaced</option>
+                  <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-6">
+                    <h3 className="text-sm font-black text-slate-800 flex items-center gap-2"><LineChart size={16} /> SECOND SEMESTER METRICS</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Units Enrolled</label>
+                        <input type="number" className="w-full border rounded-lg p-2" value={riskData["Curricular units 2nd sem (enrolled)"]} onChange={(e) => updateRisk("Curricular units 2nd sem (enrolled)", Number(e.target.value))} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Units Approved</label>
+                        <input type="number" className="w-full border rounded-lg p-2" value={riskData["Curricular units 2nd sem (approved)"]} onChange={(e) => updateRisk("Curricular units 2nd sem (approved)", Number(e.target.value))} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase">Average Grade</label>
+                        <input type="number" step="0.1" className="w-full border rounded-lg p-2" value={riskData["Curricular units 2nd sem (grade)"]} onChange={(e) => updateRisk("Curricular units 2nd sem (grade)", Number(e.target.value))} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-amber-50 rounded-3xl border border-amber-100 space-y-6">
+                    <h3 className="text-sm font-black text-amber-800 uppercase tracking-wider">Important Additional Inputs</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Age At Enrollment</label>
+                        <input
+                          type="number"
+                          className="w-full bg-white border border-slate-200 rounded-xl p-3"
+                          value={riskData["Age at enrollment"]}
+                          onChange={(e) => updateRisk("Age at enrollment", Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Student Gender</label>
+                        <select
+                          className="w-full bg-white border border-slate-200 rounded-xl p-3"
+                          value={riskData["Gender"]}
+                          onChange={(e) => updateRisk("Gender", Number(e.target.value))}
+                        >
+                          <option value={1}>Male</option>
+                          <option value={0}>Female</option>
                         </select>
-                        <select className="border rounded-lg p-2 text-xs" value={riskData["Educational special needs"]} onChange={(e) => updateRisk("Educational special needs", Number(e.target.value))}>
-                          <option value={1}>Special Needs: Yes</option><option value={0}>Special Needs: No</option>
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">International Student</label>
+                        <select
+                          className="w-full bg-white border border-slate-200 rounded-xl p-3"
+                          value={riskData["International"]}
+                          onChange={(e) => updateRisk("International", Number(e.target.value))}
+                        >
+                          <option value={0}>No</option>
+                          <option value={1}>Yes</option>
+                        </select>
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Displaced Student</label>
+                        <select
+                          className="w-full bg-white border border-slate-200 rounded-xl p-3"
+                          value={riskData["Displaced"]}
+                          onChange={(e) => updateRisk("Displaced", Number(e.target.value))}
+                        >
+                          <option value={0}>No</option>
+                          <option value={1}>Yes</option>
+                        </select>
+                      </div>
+                      <div className="space-y-3 md:col-span-2">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Educational Special Needs</label>
+                        <select
+                          className="w-full bg-white border border-slate-200 rounded-xl p-3"
+                          value={riskData["Educational special needs"]}
+                          onChange={(e) => updateRisk("Educational special needs", Number(e.target.value))}
+                        >
+                          <option value={0}>No</option>
+                          <option value={1}>Yes</option>
                         </select>
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+
+                  <div>
+                    <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500 mb-4">Computer Science Track Recommendation</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Target Domain</label>
@@ -188,22 +255,33 @@ export default function Home() {
                         <input type="number" step="0.1" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3" value={careerData["GPA"]} onChange={(e) => updateCareer("GPA", Number(e.target.value))} />
                       </div>
                     </div>
+                  </div>
 
-                    <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 space-y-4">
-                      <h3 className="text-sm font-black text-blue-800 flex items-center gap-2 uppercase tracking-tighter">Current Skill Proficiency</h3>
-                      <div className="grid grid-cols-3 gap-4">
-                        {["Python", "SQL", "Java"].map((skill) => (
-                          <div key={skill} className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase">{skill}</label>
-                            <select className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm" value={(careerData as any)[skill]} onChange={(e) => updateCareer(skill, e.target.value)}>
-                              <option>Strong</option><option>Average</option><option>Weak</option>
-                            </select>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="space-y-3">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Projects</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none" value={careerData["Projects"]} onChange={(e) => updateCareer("Projects", e.target.value)}>
+                      <option>Academic Project</option>
+                      <option>Internship Project</option>
+                      <option>Capstone Project</option>
+                      <option>Freelance Project</option>
+                      <option>Personal Project</option>
+                    </select>
+                  </div>
+
+                  <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 space-y-4">
+                    <h3 className="text-sm font-black text-blue-800 flex items-center gap-2 uppercase tracking-tighter">Current Skill Proficiency</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      {["Python", "SQL", "Java"].map((skill) => (
+                        <div key={skill} className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase">{skill}</label>
+                          <select className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm" value={(careerData as any)[skill]} onChange={(e) => updateCareer(skill, e.target.value)}>
+                            <option>Strong</option><option>Average</option><option>Weak</option>
+                          </select>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
+                </div>
 
                 <button type="submit" disabled={loading} className="w-full bg-slate-900 hover:bg-black text-white font-black py-4 rounded-2xl shadow-xl shadow-slate-200 transition-all flex items-center justify-center gap-2 group disabled:bg-slate-300">
                   {loading ? "CONSULTING HYBRID ENGINE..." : (
@@ -223,6 +301,11 @@ export default function Home() {
                   <h3 className="font-black text-slate-800 uppercase tracking-tight">System Ready</h3>
                   <p className="text-xs text-slate-400 font-bold max-w-[200px] mx-auto">Please complete the student profile to generate the analysis.</p>
                 </div>
+              </div>
+            ) : result.error ? (
+              <div className="p-8 rounded-[2.5rem] border border-red-200 bg-red-50 text-red-700">
+                <h3 className="text-sm font-black uppercase tracking-widest mb-3">Prediction Error</h3>
+                <p className="text-sm font-bold leading-relaxed">{result.error}</p>
               </div>
             ) : (
               <div className="space-y-6 animate-in zoom-in-95 duration-500">

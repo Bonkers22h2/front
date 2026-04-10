@@ -7,6 +7,8 @@ import { BrainCircuit, ChevronRight, Settings, Briefcase, BookOpen } from "lucid
 type SearchResult = {
   input: unknown;
   recommendation: string;
+  health_status?: string | null;
+  actionable_advice?: string | null;
   timestamp: string | null;
 };
 
@@ -59,6 +61,7 @@ export default function SearchPage() {
   };
 
   const selected = selectedIndex !== null && results ? results[selectedIndex] : null;
+  const isHighRisk = selected?.health_status?.includes("High Risk") ?? false;
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 md:p-10">
@@ -183,18 +186,31 @@ export default function SearchPage() {
               </div>
             ) : (
               <div className="space-y-6 animate-in zoom-in-95 duration-500">
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2 text-slate-400">
-                    <ChevronRight size={16} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Timestamp</span>
+                <div
+                  className={
+                    "p-8 rounded-[2.5rem] border-b-[8px] shadow-2xl " +
+                    (isHighRisk
+                      ? "bg-red-600 text-white border-red-800 shadow-red-100"
+                      : "bg-emerald-600 text-white border-emerald-800 shadow-emerald-100")
+                  }
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">
+                      Predictive Diagnostic
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">
+                      {selected.timestamp ?? "—"}
+                    </span>
                   </div>
-                  <p className="text-sm font-black text-slate-900 break-words">{selected.timestamp ?? "—"}</p>
+                  <h2 className="text-3xl font-black leading-tight italic uppercase tracking-tighter">
+                    {selected.health_status ? selected.health_status.split(":")[1] || selected.health_status : "—"}
+                  </h2>
                 </div>
 
                 <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-2 text-slate-400">
                     <Briefcase size={16} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Recommendation</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Recommended Track</span>
                   </div>
                   <p className="text-2xl font-black text-slate-900">{selected.recommendation}</p>
                 </div>
@@ -203,12 +219,22 @@ export default function SearchPage() {
                   <BookOpen className="absolute -right-4 -bottom-4 text-blue-500/30" size={120} />
                   <div className="relative z-10">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 opacity-80">
-                      Decrypted Input (Read-only)
+                      Prescriptive Expert Advice
                     </h4>
-                    <pre className="text-sm font-bold leading-relaxed whitespace-pre-wrap break-words bg-white/10 border border-white/20 rounded-2xl p-4 overflow-x-auto">
-                      {JSON.stringify(selected.input, null, 2)}
-                    </pre>
+                    <p className="text-lg font-bold leading-relaxed">
+                      {selected.actionable_advice ?? "—"}
+                    </p>
                   </div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-2 text-slate-400">
+                    <ChevronRight size={16} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Decrypted Input</span>
+                  </div>
+                  <pre className="mt-3 whitespace-pre-wrap break-words text-sm bg-slate-50 border border-slate-200 rounded-2xl p-4 overflow-x-auto">
+                    {JSON.stringify(selected.input, null, 2)}
+                  </pre>
                 </div>
               </div>
             )}

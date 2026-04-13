@@ -4,6 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import { BrainCircuit, ChevronRight, Settings, Briefcase, BookOpen } from "lucide-react";
 
+function formatTimestamp(ts: string | null): string | null {
+  if (!ts) return null;
+  const date = new Date(ts);
+  if (Number.isNaN(date.getTime())) return ts;
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
+}
+
 type SearchResult = {
   input: unknown;
   recommendation: string;
@@ -124,6 +139,7 @@ export default function SearchPage() {
                       <div className="space-y-2">
                         {results.map((r, idx) => {
                           const isSelected = idx === selectedIndex;
+                          const label = formatTimestamp(r.timestamp) ?? `Result ${idx + 1}`;
                           return (
                             <button
                               key={idx}
@@ -136,7 +152,7 @@ export default function SearchPage() {
                                   : "bg-white/60 border-slate-200 text-slate-700 hover:bg-white")
                               }
                             >
-                              {r.timestamp ?? `Result ${idx + 1}`}
+                              {label}
                             </button>
                           );
                         })}
@@ -199,7 +215,7 @@ export default function SearchPage() {
                       Predictive Diagnostic
                     </span>
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">
-                      {selected.timestamp ?? "—"}
+                      {formatTimestamp(selected.timestamp) ?? "—"}
                     </span>
                   </div>
                   <h2 className="text-3xl font-black leading-tight italic uppercase tracking-tighter">

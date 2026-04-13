@@ -21,6 +21,8 @@ function formatTimestamp(ts: string | null): string | null {
 type SearchResult = {
   input: unknown;
   recommendation: string;
+  signature?: string | null;
+  integrity_valid?: boolean;
   health_status?: string | null;
   actionable_advice?: string | null;
   timestamp: string | null;
@@ -151,7 +153,17 @@ export default function SearchPage() {
                                   : "bg-white/60 border-slate-200 text-slate-700 hover:bg-white")
                               }
                             >
-                              {label}
+                              <span>{label}</span>
+                              {typeof r.integrity_valid === "boolean" && (
+                                <span
+                                  className={
+                                    "ml-2 text-[10px] uppercase tracking-wider " +
+                                    (r.integrity_valid ? "text-emerald-700" : "text-amber-700")
+                                  }
+                                >
+                                  {r.integrity_valid ? "Valid" : "Tampered"}
+                                </span>
+                              )}
                             </button>
                           );
                         })}
@@ -228,6 +240,16 @@ export default function SearchPage() {
                     <span className="text-[10px] font-black uppercase tracking-widest">Recommended Track</span>
                   </div>
                   <p className="text-2xl font-black text-slate-900">{selected.recommendation}</p>
+                  {typeof selected.integrity_valid === "boolean" && (
+                    <p
+                      className={
+                        "mt-3 text-xs font-black uppercase tracking-wider " +
+                        (selected.integrity_valid ? "text-emerald-700" : "text-amber-700")
+                      }
+                    >
+                      {selected.integrity_valid ? "Valid" : "Tampered"}
+                    </p>
+                  )}
                 </div>
 
                 <div className="bg-blue-600 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-blue-100 relative overflow-hidden">

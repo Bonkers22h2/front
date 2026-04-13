@@ -14,6 +14,8 @@ import {
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [integrityMessage, setIntegrityMessage] = useState<string | null>(null);
   const [studentNumber, setStudentNumber] = useState("");
 
   // --- FULL 36-FEATURE RISK STATE (SVM) ---
@@ -73,6 +75,7 @@ export default function Home() {
   const handlePredict = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setIntegrityMessage(null);
     try {
       const normalizedRiskData = {
         ...riskData,
@@ -100,6 +103,38 @@ export default function Home() {
       setResult({ error: "Backend Connection Failed. Run uvicorn api:app." });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyIntegrity = async () => {
+    if (!result?.recommended_track || !result?.signature) {
+      setIntegrityMessage("No signature available for verification.");
+      return;
+    }
+
+    setVerifying(true);
+    setIntegrityMessage(null);
+    try {
+      const res = await fetch("/api/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", accept: "application/json" },
+        body: JSON.stringify({
+          recommendation: result.recommended_track,
+          signature: result.signature,
+        }),
+      });
+
+      if (!res.ok) {
+        setIntegrityMessage("Verification request failed.");
+        return;
+      }
+
+      const data = await res.json();
+      setIntegrityMessage(data?.valid ? "✅ Signature Valid" : "⚠️ Tampered");
+    } catch {
+      setIntegrityMessage("Verification request failed.");
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -405,7 +440,27 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="text-center pt-4">
+                <div className="text-center pt-4 space-y-3">
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleVerifyIntegrity}
+                      disabled={verifying}
+                      className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black uppercase tracking-wider disabled:bg-slate-300"
+                    >
+                      {verifying ? "Verifying..." : "Verify Integrity"}
+                    </button>
+                    {integrityMessage && (
+                      <span
+                        className={
+                          "text-xs font-black uppercase tracking-wider " +
+                          (integrityMessage === "✅ Signature Valid" ? "text-emerald-700" : "text-amber-700")
+                        }
+                      >
+                        {integrityMessage}
+                      </span>
+                    )}
+                  </div>
                   <button onClick={() => setResult(null)} className="text-[10px] font-black text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors">Clear Diagnostics</button>
                 </div>
               </div>
